@@ -360,10 +360,15 @@ class AdbFilterByProcessId(sublime_plugin.TextCommand):
     def run(self, edit):
         data = self.view.substr(self.view.full_line(self.view.sel()[0].a))
         match = re.match(r"[\-\d\s:.]*./.+\( *(\d+)\)", data)
+
         if match != None:
             set_filter(self.view, "\( *%s\)" % match.group(1))
         else:
-            sublime.error_message("Couldn't extract process id")
+            match = re.match(r"^([\d\-]*) ([\d:.]*) *([\d]*)", data)
+            if match != None:
+                set_filter(self.view, "^([\d\-]*) ([\d:.]*) *(%s)" % match.group(3))
+            else: 
+                sublime.error_message("Couldn't extract process id")
 
     def is_enabled(self):
         return is_adb_syntax(self.view)
@@ -376,10 +381,15 @@ class AdbFilterByProcessName(sublime_plugin.TextCommand):
     def run(self, edit):
         data = self.view.substr(self.view.full_line(self.view.sel()[0].a))
         match = re.match(r"[\-\d\s:.]*./(.+)\( *\d+\)", data)
+
         if match != None:
             set_filter(self.view, "%s\( *\d+\)" % match.group(1))
         else:
-            sublime.error_message("Couldn't extract process name")
+            match = re.match(r"^[\d \-:.]*(\D*?):", data)
+            if match != None:
+                set_filter(self.view, "^[\d \-:.]*(%s*?):" % match.group(1))
+            else:
+                sublime.error_message("Couldn't extract process name")
 
     def is_enabled(self):
         return is_adb_syntax(self.view)
@@ -395,7 +405,11 @@ class AdbFilterByMessageLevel(sublime_plugin.TextCommand):
         if match != None:
             set_filter(self.view, "%s/.+\( *\d+\)" % match.group(1))
         else:
-            sublime.error_message("Couldn't extract Message level")
+            match = re.match(r"^[\d \-:.\ ]*([DFIVE])", data)
+            if match != None:
+                set_filter(self.view, "^[\d \-:.\ ]*([%s])" % match.group(1))
+            else:
+                sublime.error_message("Couldn't extract Message level")
 
     def is_enabled(self):
         return is_adb_syntax(self.view)
